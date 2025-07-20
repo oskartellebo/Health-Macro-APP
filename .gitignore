@@ -11,5 +11,8 @@ instance/
 .vscode/
 .idea/
 
+# Node
+node_modules/
+
 # Database
 app.db 
