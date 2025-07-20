@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-3xl font-bold text-white">Kalorispårning</h1>
+        <p class="text-gray-400">Sök ingredienser och logga dina måltider</p>
+    </div>
+    <a href="{{ url_for('main.dashboard') }}" class="text-emerald-400 hover:text-emerald-300 transition duration-150 ease-in-out">
+        &larr; Tillbaka till Dashboard
+    </a>
+</div>
+
+<!-- Sektion för att lägga till mat -->
+<div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-8">
+    <h2 class="text-xl font-semibold text-white mb-4 border-b border-gray-700 pb-3">Lägg till mat</h2>
+    <form method="POST" action="{{ url_for('main.diet') }}">
+        <div class="mb-4">
+            <label for="search_ingredient" class="block text-sm font-medium text-gray-300 mb-1">Sök ingrediens</label>
+            <div class="flex">
+                <input type="text" id="search_ingredient" name="search_ingredient" placeholder="Sök efter matvara, t.ex. 'kyckling'..." class="w-full bg-gray-700 border border-gray-600 rounded-l-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
+                <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-r-md">Sök</button>
+            </div>
+        </div>
+    </form>
+    
+    <!-- Sökresultat visas här -->
+    {% if search_results %}
+    <div class="mt-6">
+        <h3 class="text-lg font-semibold text-white mb-2">Sökresultat</h3>
+        <ul class="space-y-2 max-h-60 overflow-y-auto">
+            {% for food in search_results %}
+                <li class="bg-gray-700 p-3 rounded-md">
+                    <form method="POST" action="{{ url_for('main.add_food_log') }}" class="flex justify-between items-center">
+                        <input type="hidden" name="food_name" value="{{ food.food_name }}">
+                        <input type="hidden" name="food_description" value="{{ food.food_description }}">
+                        <div>
+                            <p class="font-semibold text-white">{{ food.food_name }}</p>
+                            <p class="text-sm text-gray-400">{{ food.food_description }}</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <select name="meal_type" class="bg-gray-600 border border-gray-500 rounded-md py-1 px-2 text-white text-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
+                                <option value="Frukost">Frukost</option>
+                                <option value="Lunch">Lunch</option>
+                                <option value="Middag">Middag</option>
+                                <option value="Mellanmål">Mellanmål</option>
+                            </select>
+                            <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-md h-8 w-8 flex items-center justify-center text-lg">+</button>
+                        </div>
+                    </form>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Dagens loggade måltider -->
+<div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+    <h2 class="text-xl font-semibold text-white mb-4">Dagens måltider</h2>
+    
+    {% set meal_types = ['Frukost', 'Lunch', 'Middag', 'Mellanmål'] %}
+    {% for meal in meal_types %}
+    <div class="mb-6">
+        <div class="flex justify-between items-center mb-2">
+            <h3 class="text-lg font-bold text-emerald-400">{{ meal }}</h3>
+            {% set total_calories = food_logs.get(meal, []) | sum(attribute='calories') %}
+            <span class="text-gray-300 font-semibold">{{ "%.0f"|format(total_calories) }} kcal</span>
+        </div>
+        {% if food_logs.get(meal) %}
+            <ul class="space-y-2">
+                {% for log in food_logs[meal] %}
+                <li class="flex justify-between items-center bg-gray-700 p-3 rounded-md">
+                    <div>
+                        <p class="text-white">{{ log.food_name }}</p>
+                        <p class="text-sm text-gray-400">
+                            {{ "%.0f"|format(log.calories) }} kcal, P: {{ "%.1f"|format(log.protein) }}g, C: {{ "%.1f"|format(log.carbohydrates) }}g, F: {{ "%.1f"|format(log.fat) }}g
+                        </p>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="text-center text-gray-500 border-2 border-dashed border-gray-600 p-4 rounded-md">
+                Inga varor loggade för {{ meal.lower() }}.
+            </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endblock %} 

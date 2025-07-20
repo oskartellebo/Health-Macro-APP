@@ -1,7 +1,9 @@
-from flask import render_template, Blueprint, flash, redirect, url_for
+import re
+from flask import render_template, Blueprint, flash, redirect, url_for, request
 from app import db
-from app.models import User, WeightLog
+from app.models import User, WeightLog, FoodLog
 from app.services import stats_service
+from app.services import fatsecret_service
 from flask_wtf import FlaskForm
 from wtforms import FloatField, DateField, SubmitField
 from wtforms.validators import DataRequired
@@ -80,11 +82,80 @@ def weight():
             flash('Ny vikt har loggats!', 'success')
         
         db.session.commit()
+        flash('Vikt loggad!', 'success')
         return redirect(url_for('main.weight'))
 
-    # Hämta data för rendering
+    # Hämta befintliga loggar
     logs_query = db.select(WeightLog).where(WeightLog.user_id == user.id).order_by(WeightLog.date.desc())
     logs = db.session.scalars(logs_query).all()
     stats = stats_service.calculate_weight_stats(user.id)
     
-    return render_template('weight.html', title='Vikt', form=form, logs=logs, stats=stats)
+    return render_template('weight.html', title='Vikt', form=form, weight_logs=logs, stats=stats)
+
+
+@main_bp.route('/diet', methods=['GET', 'POST'])
+def diet():
+    """Renderar sidan för kostloggning och hanterar sökning."""
+    search_results = None
+    if request.method == 'POST' and 'search_ingredient' in request.form:
+        search_term = request.form.get('search_ingredient')
+        if search_term:
+            token = fatsecret_service.get_fatsecret_token()
+            if token:
+                search_data = fatsecret_service.search_food(search_term, token)
+                if search_data and 'foods' in search_data and 'food' in search_data['foods']:
+                    search_results = search_data['foods']['food']
+                else:
+                    flash('Inga resultat hittades för den söktermen.', 'info')
+            else:
+                flash('Kunde inte ansluta till FatSecret. Kontrollera API-nycklarna.', 'danger')
+
+    # Hämta dagens loggade mat
+    user = db.session.scalar(db.select(User).where(User.id == 1)) # Anta användare 1
+    today_logs_query = db.select(FoodLog).where(FoodLog.user_id == user.id, FoodLog.date == date.today()).order_by(FoodLog.id)
+    today_logs = db.session.scalars(today_logs_query).all()
+
+    # Gruppera efter måltidstyp
+    grouped_logs = {}
+    for log in today_logs:
+        if log.meal_type not in grouped_logs:
+            grouped_logs[log.meal_type] = []
+        grouped_logs[log.meal_type].append(log)
+
+    return render_template('diet.html', title='Kost', search_results=search_results, food_logs=grouped_logs)
+
+
+@main_bp.route('/diet/add', methods=['POST'])
+def add_food_log():
+    """Tar emot data från sökresultat och loggar mat i databasen."""
+    food_name = request.form.get('food_name')
+    food_description = request.form.get('food_description')
+    meal_type = request.form.get('meal_type')
+
+    # Extrahera näringsvärden med regex
+    calories = re.search(r"Calories: ([\d.]+)kcal", food_description)
+    fat = re.search(r"Fat: ([\d.]+)g", food_description)
+    carbs = re.search(r"Carbs: ([\d.]+)g", food_description)
+    protein = re.search(r"Protein: ([\d.]+)g", food_description)
+
+    if not all([food_name, meal_type, calories]):
+        flash('Något gick fel, all data kunde inte läsas in.', 'danger')
+        return redirect(url_for('main.diet'))
+
+    user = db.session.scalar(db.select(User).where(User.id == 1)) # Anta användare 1
+
+    new_log = FoodLog(
+        user_id=user.id,
+        food_name=food_name,
+        meal_type=meal_type,
+        calories=float(calories.group(1)),
+        fat=float(fat.group(1)) if fat else 0,
+        carbohydrates=float(carbs.group(1)) if carbs else 0,
+        protein=float(protein.group(1)) if protein else 0,
+        date=date.today()
+    )
+
+    db.session.add(new_log)
+    db.session.commit()
+    flash(f"{food_name} har lagts till i {meal_type}!", 'success')
+    return redirect(url_for('main.diet'))
