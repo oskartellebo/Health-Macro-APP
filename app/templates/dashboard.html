@@ -22,7 +22,7 @@
     <!-- Viktförändring (7d) -->
     <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
         <h3 class="text-lg font-semibold text-gray-300">7-dagars Trend</h3>
-        <p class="text-3xl font-bold mt-2 {{ 'text-green-500' if stats.change < 0 else 'text-red-500' if stats.change > 0 else 'text-white' }}">
+        <p class="text-3xl font-bold mt-2 {{ 'text-green-500' if stats.change is not none and stats.change < 0 else 'text-red-500' if stats.change is not none and stats.change > 0 else 'text-white' }}">
             {{ '%.1f'|format(stats.change) if stats.change is not none else 'N/A' }} kg
         </p>
          <p class="text-sm text-gray-500 mt-1">Jämfört med föregående period</p>
