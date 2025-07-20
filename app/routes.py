@@ -1,6 +1,7 @@
 from flask import render_template, Blueprint, flash, redirect, url_for
 from app import db
 from app.models import User, WeightLog
+from app.services import stats_service
 from flask_wtf import FlaskForm
 from wtforms import FloatField, DateField, SubmitField
 from wtforms.validators import DataRequired
@@ -24,38 +25,6 @@ def get_or_create_default_user():
         db.session.commit()
     return user
 
-def calculate_weight_stats(user_id):
-    """Beräknar viktstatistik för en given användare."""
-    today = date.today()
-    
-    # Senaste 7 dagarna
-    start_of_period1 = today - timedelta(days=6)
-    logs_p1_query = db.select(WeightLog.weight).where(
-        WeightLog.user_id == user_id,
-        WeightLog.date >= start_of_period1
-    )
-    logs_p1 = db.session.scalars(logs_p1_query).all()
-    
-    avg_p1 = round(sum(logs_p1) / len(logs_p1), 1) if logs_p1 else None
-
-    # Föregående 7-dagarsperiod
-    start_of_period2 = today - timedelta(days=13)
-    end_of_period2 = today - timedelta(days=7)
-    logs_p2_query = db.select(WeightLog.weight).where(
-        WeightLog.user_id == user_id,
-        WeightLog.date >= start_of_period2,
-        WeightLog.date <= end_of_period2
-    )
-    logs_p2 = db.session.scalars(logs_p2_query).all()
-
-    avg_p2 = round(sum(logs_p2) / len(logs_p2), 1) if logs_p2 else None
-    
-    change = None
-    if avg_p1 is not None and avg_p2 is not None:
-        change = avg_p1 - avg_p2
-
-    return {"avg_7_days": avg_p1, "change": change}
-
 
 # --- Routes ---
 @main_bp.route('/')
@@ -67,8 +36,8 @@ def dashboard():
     latest_log_query = db.select(WeightLog).where(WeightLog.user_id == user.id).order_by(WeightLog.date.desc())
     latest_log = db.session.scalars(latest_log_query).first()
     
-    # Hämta statistik
-    stats = calculate_weight_stats(user.id)
+    # Hämta statistik från tjänstelagret
+    stats = stats_service.calculate_weight_stats(user.id)
     
     # Hämta data för graf (senaste 30 dagarna)
     thirty_days_ago = date.today() - timedelta(days=29)
@@ -116,6 +85,6 @@ def weight():
     # Hämta data för rendering
     logs_query = db.select(WeightLog).where(WeightLog.user_id == user.id).order_by(WeightLog.date.desc())
     logs = db.session.scalars(logs_query).all()
-    stats = calculate_weight_stats(user.id)
+    stats = stats_service.calculate_weight_stats(user.id)
     
     return render_template('weight.html', title='Vikt', form=form, logs=logs, stats=stats)
