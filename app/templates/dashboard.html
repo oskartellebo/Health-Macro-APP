@@ -3,6 +3,108 @@
 {% block content %}
 <div>
     <h1 class="text-3xl font-bold text-white">Dashboard</h1>
-    <p class="mt-2 text-lg text-gray-400">Välkommen! Här kommer en översikt av din hälsa att visas.</p>
+    <p class="mt-2 text-lg text-gray-400">En översikt av din hälsoresa.</p>
 </div>
+
+<!-- Statistik-kort -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+    <!-- Senaste Vikt -->
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+        <h3 class="text-lg font-semibold text-gray-300">Senaste Vikt</h3>
+        <p class="text-3xl font-bold text-white mt-2">
+            {{ '%.1f'|format(latest_log.weight) if latest_log else 'N/A' }} kg
+        </p>
+        <p class="text-sm text-gray-500 mt-1">
+            {{ latest_log.date.strftime('%Y-%m-%d') if latest_log else 'Ingen data' }}
+        </p>
+    </div>
+
+    <!-- Viktförändring (7d) -->
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+        <h3 class="text-lg font-semibold text-gray-300">7-dagars Trend</h3>
+        <p class="text-3xl font-bold mt-2 {{ 'text-green-500' if stats.change < 0 else 'text-red-500' if stats.change > 0 else 'text-white' }}">
+            {{ '%.1f'|format(stats.change) if stats.change is not none else 'N/A' }} kg
+        </p>
+         <p class="text-sm text-gray-500 mt-1">Jämfört med föregående period</p>
+    </div>
+
+    <!-- Kalorier Idag (platshållare) -->
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg opacity-50">
+        <h3 class="text-lg font-semibold text-gray-300">Kalorier Idag</h3>
+        <p class="text-3xl font-bold text-white mt-2">Kommer snart</p>
+        <p class="text-sm text-gray-500 mt-1">Funktion under utveckling</p>
+    </div>
+
+    <!-- Veckans Pass (platshållare) -->
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg opacity-50">
+        <h3 class="text-lg font-semibold text-gray-300">Veckans Pass</h3>
+        <p class="text-3xl font-bold text-white mt-2">Kommer snart</p>
+        <p class="text-sm text-gray-500 mt-1">Funktion under utveckling</p>
+    </div>
+</div>
+
+<!-- Viktgraf -->
+<div class="mt-8 bg-gray-800 p-6 rounded-lg shadow-lg">
+    <h3 class="text-xl font-bold text-white mb-4">Viktutveckling (30 dagar)</h3>
+    <canvas id="weightChart"></canvas>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('weightChart').getContext('2d');
+    
+    // Hämta data från Flask
+    const labels = {{ chart_labels|tojson }};
+    const data = {{ chart_values|tojson }};
+
+    if (data.length > 0) {
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Vikt (kg)',
+                    data: data,
+                    backgroundColor: 'rgba(20, 184, 166, 0.2)',
+                    borderColor: 'rgba(20, 184, 166, 1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgba(20, 184, 166, 1)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                        ticks: { color: '#d1d5db' }
+                    },
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                        ticks: { color: '#d1d5db' }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#d1d5db'
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        // Visa ett meddelande om ingen data finns
+        const canvas = document.getElementById('weightChart');
+        const parent = canvas.parentElement;
+        canvas.remove();
+        const p = document.createElement('p');
+        p.textContent = 'Logga din vikt för att se en graf här.';
+        p.className = 'text-center text-gray-500 py-8';
+        parent.appendChild(p);
+    }
+});
+</script>
 {% endblock %}

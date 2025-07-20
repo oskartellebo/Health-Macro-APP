@@ -61,7 +61,33 @@ def calculate_weight_stats(user_id):
 @main_bp.route('/')
 @main_bp.route('/dashboard')
 def dashboard():
-    return render_template('dashboard.html', title='Dashboard')
+    user = get_or_create_default_user()
+    
+    # Hämta senaste vikt
+    latest_log_query = db.select(WeightLog).where(WeightLog.user_id == user.id).order_by(WeightLog.date.desc())
+    latest_log = db.session.scalars(latest_log_query).first()
+    
+    # Hämta statistik
+    stats = calculate_weight_stats(user.id)
+    
+    # Hämta data för graf (senaste 30 dagarna)
+    thirty_days_ago = date.today() - timedelta(days=29)
+    chart_data_query = db.select(WeightLog).where(
+        WeightLog.user_id == user.id,
+        WeightLog.date >= thirty_days_ago
+    ).order_by(WeightLog.date.asc())
+    chart_logs = db.session.scalars(chart_data_query).all()
+
+    # Formatera data för Chart.js
+    chart_labels = [log.date.strftime('%b %d') for log in chart_logs]
+    chart_values = [log.weight for log in chart_logs]
+
+    return render_template('dashboard.html', 
+                           title='Dashboard', 
+                           latest_log=latest_log, 
+                           stats=stats,
+                           chart_labels=chart_labels,
+                           chart_values=chart_values)
 
 @main_bp.route('/weight', methods=['GET', 'POST'])
 def weight():
