@@ -34,9 +34,9 @@
         <!-- Statistik-kort -->
         <div class="mb-6 bg-gray-900 p-4 rounded-lg">
             <h3 class="text-lg font-semibold text-white">7-Dagars Genomsnitt</h3>
-            <p class="text-3xl font-bold text-teal-400 mt-2">{{ stats.avg_7_days if stats.avg_7_days else 'Saknar data' }} kg</p>
+            <p class="text-3xl font-bold text-teal-400 mt-2">{{ '%.1f'|format(stats.avg_7_days) if stats.avg_7_days is not none else 'N/A' }} kg</p>
             <p class="text-md text-gray-400 mt-1">
-                Förändring: <span class="{{ 'text-green-500' if stats.change > 0 else 'text-red-500' if stats.change < 0 else 'text-gray-400' }}">{{ '%.1f'|format(stats.change) if stats.change is not none else 'N/A' }} kg</span>
+                Förändring: <span class="{{ 'text-green-500' if stats.change is not none and stats.change < 0 else 'text-red-500' if stats.change is not none and stats.change > 0 else 'text-gray-400' }}">{{ '%.1f'|format(stats.change) if stats.change is not none else 'N/A' }} kg</span>
             </p>
         </div>
 
