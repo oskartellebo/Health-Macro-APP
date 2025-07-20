@@ -9,8 +9,8 @@
 </head>
 <body class="h-full">
     <div class="flex min-h-full">
-        <!-- Sidomeny -->
-        <div class="flex flex-col w-64 bg-gray-800">
+        <!-- Sidomeny (off-canvas för mobil, synlig på desktop) -->
+        <div id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-gray-800 transform -translate-x-full transition-transform duration-300 ease-in-out z-30 md:relative md:translate-x-0">
             <div class="flex items-center justify-center h-16 bg-gray-900">
                 <span class="text-white font-bold uppercase">Health Macro</span>
             </div>
@@ -37,10 +37,39 @@
 
         <!-- Huvudinnehåll -->
         <div class="flex flex-col flex-1">
+            <!-- Header för mobil med hamburger-knapp -->
+            <div class="md:hidden flex justify-between items-center bg-gray-800 p-4">
+                <span class="text-white font-bold uppercase">Health Macro</span>
+                <button id="menu-btn" class="text-white focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                    </svg>
+                </button>
+            </div>
+            
             <main class="flex-1 p-4 sm:p-6">
                 {% block content %}{% endblock %}
             </main>
         </div>
+        
+        <!-- Overlay för att stänga menyn på mobil -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black opacity-50 z-20 hidden md:hidden"></div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuBtn = document.getElementById('menu-btn');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+
+            function toggleMenu() {
+                sidebar.classList.toggle('-translate-x-full');
+                overlay.classList.toggle('hidden');
+            }
+
+            menuBtn.addEventListener('click', toggleMenu);
+            overlay.addEventListener('click', toggleMenu);
+        });
+    </script>
 </body>
 </html>
