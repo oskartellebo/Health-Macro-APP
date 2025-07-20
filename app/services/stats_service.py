@@ -1,6 +1,5 @@
-from app import db
-from app.models import WeightLog
 from datetime import date, timedelta
+from .models import db, User, WeightLog, FoodLog
 
 def calculate_weight_stats(user_id):
     """Beräknar viktstatistik för en given användare."""
@@ -33,3 +32,28 @@ def calculate_weight_stats(user_id):
         change = avg_p1 - avg_p2
 
     return {"avg_7_days": avg_p1, "change": change}
+
+def calculate_calorie_stats(user_id):
+    """Beräknar dagens kaloriintag och mål."""
+    today = date.today()
+    
+    # Hämta totala kalorier för idag
+    total_calories_query = db.session.query(db.func.sum(FoodLog.calories)).filter(
+        FoodLog.user_id == user_id,
+        FoodLog.date == today
+    )
+    total_calories = total_calories_query.scalar() or 0
+    
+    # Hämta användarens mål (hårdkodat för nu)
+    # TODO: Flytta till User-modellen
+    calorie_goal = 2200
+    
+    remaining_calories = calorie_goal - total_calories
+    progress_percentage = (total_calories / calorie_goal) * 100 if calorie_goal > 0 else 0
+    
+    return {
+        "total_calories": total_calories,
+        "calorie_goal": calorie_goal,
+        "remaining_calories": remaining_calories,
+        "progress_percentage": progress_percentage
+    }

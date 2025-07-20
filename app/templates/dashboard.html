@@ -6,40 +6,69 @@
     <p class="mt-2 text-lg text-gray-400">En översikt av din hälsoresa.</p>
 </div>
 
-<!-- Statistik-kort -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+<!-- Stat-kort -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
     <!-- Senaste Vikt -->
     <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
-        <h3 class="text-lg font-semibold text-gray-300">Senaste Vikt</h3>
-        <p class="text-3xl font-bold text-white mt-2">
-            {{ '%.1f'|format(latest_log.weight) if latest_log else 'N/A' }} kg
-        </p>
-        <p class="text-sm text-gray-500 mt-1">
-            {{ latest_log.date.strftime('%Y-%m-%d') if latest_log else 'Ingen data' }}
-        </p>
+        <div class="flex items-center">
+            <div class="p-3 rounded-full bg-emerald-500 bg-opacity-20">
+                <svg class="h-6 w-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-400">Vikt idag</p>
+                {% if weight_stats.latest_weight %}
+                    <p class="text-2xl font-bold text-white">{{ weight_stats.latest_weight }} kg</p>
+                {% else %}
+                    <p class="text-2xl font-bold text-white">-</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="mt-4">
+            {% if weight_stats.change_since_week_ago is not none %}
+                <p class="text-sm {{ 'text-green-400' if weight_stats.change_since_week_ago < 0 else 'text-red-400' }}">
+                    {{ "%.2f"|format(weight_stats.change_since_week_ago) }} kg denna vecka
+                </p>
+            {% else %}
+                <p class="text-sm text-gray-500">Logga mer data</p>
+            {% endif %}
+        </div>
     </div>
 
-    <!-- Viktförändring (7d) -->
+    <!-- Kalorier Idag -->
     <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
-        <h3 class="text-lg font-semibold text-gray-300">7-dagars Trend</h3>
-        <p class="text-3xl font-bold mt-2 {{ 'text-green-500' if stats.change is not none and stats.change < 0 else 'text-red-500' if stats.change is not none and stats.change > 0 else 'text-white' }}">
-            {{ '%.1f'|format(stats.change) if stats.change is not none else 'N/A' }} kg
-        </p>
-         <p class="text-sm text-gray-500 mt-1">Jämfört med föregående period</p>
+        <div class="flex items-center">
+            <div class="p-3 rounded-full bg-emerald-500 bg-opacity-20">
+                <svg class="h-6 w-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-400">Kalorier</p>
+                <p class="text-2xl font-bold text-white">{{ "%.0f"|format(calorie_stats.total_calories) }}</p>
+            </div>
+        </div>
+        <div class="mt-4">
+            <div class="w-full bg-gray-700 rounded-full h-2.5">
+                <div class="bg-emerald-500 h-2.5 rounded-full" style="width: {{ calorie_stats.progress_percentage }}%"></div>
+            </div>
+            <p class="text-sm text-gray-400 mt-1">{{ "%.0f"|format(calorie_stats.remaining_calories) }} kvar av {{ "%.0f"|format(calorie_stats.calorie_goal) }}</p>
+        </div>
     </div>
 
-    <!-- Kalorier Idag (platshållare) -->
+    <!-- Träning (platshållare) -->
     <div class="bg-gray-800 p-6 rounded-lg shadow-lg opacity-50">
-        <h3 class="text-lg font-semibold text-gray-300">Kalorier Idag</h3>
-        <p class="text-3xl font-bold text-white mt-2">Kommer snart</p>
-        <p class="text-sm text-gray-500 mt-1">Funktion under utveckling</p>
+         <h3 class="text-lg font-semibold text-gray-300">Träning</h3>
+         <p class="text-3xl font-bold text-white mt-2">Kommer snart</p>
+         <p class="text-sm text-gray-500 mt-1">Funktion under utveckling</p>
     </div>
 
-    <!-- Veckans Pass (platshållare) -->
+    <!-- TDEE (platshållare) -->
     <div class="bg-gray-800 p-6 rounded-lg shadow-lg opacity-50">
-        <h3 class="text-lg font-semibold text-gray-300">Veckans Pass</h3>
-        <p class="text-3xl font-bold text-white mt-2">Kommer snart</p>
-        <p class="text-sm text-gray-500 mt-1">Funktion under utveckling</p>
+         <h3 class="text-lg font-semibold text-gray-300">TDEE</h3>
+         <p class="text-3xl font-bold text-white mt-2">Kommer snart</p>
+         <p class="text-sm text-gray-500 mt-1">Funktion under utveckling</p>
     </div>
 </div>
 
