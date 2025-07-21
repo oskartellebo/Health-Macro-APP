@@ -241,6 +241,12 @@ def diet():
     return render_template('diet.html', title='Kost', search_results=search_results, food_logs=grouped_logs)
 
 
+@main_bp.route('/recipes')
+def recipes():
+    """Visar sidan för att hantera recept."""
+    return render_template('recipes.html', title='Mina Recept')
+
+
 @main_bp.route('/diet/add', methods=['POST'])
 def add_food_log():
     """Tar emot data från sökresultat, skalar näringsvärden och loggar i databasen."""
