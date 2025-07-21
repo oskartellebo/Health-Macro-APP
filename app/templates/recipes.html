@@ -27,23 +27,34 @@
         </div>
 
         <!-- Sökresultat -->
-        <div x-show="searchResults.length > 0" class="mb-4 max-h-60 overflow-y-auto">
-            <template x-for="food in searchResults" :key="food.food_id">
-                <!-- Mall för sökresultat -->
-            </template>
+        <div x-show="searchResults.length > 0" class="mb-4 max-h-60 overflow-y-auto bg-gray-900 p-2 rounded-md">
+            <ul class="space-y-2">
+                <template x-for="food in searchResults" :key="food.food_id">
+                    <li class="p-2 rounded-md hover:bg-gray-700 cursor-pointer" @click="addIngredient(food)">
+                        <p class="font-semibold text-white" x-text="food.food_name"></p>
+                        <p class="text-sm text-gray-400" x-text="food.food_description"></p>
+                    </li>
+                </template>
+            </ul>
         </div>
 
         <!-- Steg 3: Ingredienslista -->
         <h3 class="text-lg font-semibold text-white mb-2">Ingredienser i receptet</h3>
         <ul x-show="ingredients.length > 0" class="space-y-2 mb-4">
             <template x-for="(ingredient, index) in ingredients" :key="index">
-                <!-- Mall för ingrediens -->
+                <li class="flex justify-between items-center bg-gray-700 p-3 rounded-md">
+                    <div>
+                        <p class="font-semibold text-white" x-text="ingredient.food_name"></p>
+                        <p class="text-sm text-gray-400"><span x-text="ingredient.grams"></span>g</p>
+                    </div>
+                    <button @click="removeIngredient(index)" class="text-red-500 hover:text-red-400">❌</button>
+                </li>
             </template>
         </ul>
         <p x-show="ingredients.length === 0" class="text-gray-500">Inga ingredienser tillagda.</p>
 
         <!-- Steg 4: Spara -->
-        <button @click="saveRecipe()" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline">
+        <button @click="saveRecipe()" :disabled="!recipeName || ingredients.length === 0" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline disabled:opacity-50 disabled:cursor-not-allowed">
             Spara Recept
         </button>
     </div>
@@ -51,12 +62,82 @@
     <!-- Sektion: Dina Sparade Recept -->
     <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
         <h2 class="text-2xl font-bold text-white mb-4">Dina Recept</h2>
-        <p class="text-gray-400">Inga recept sparade ännu.</p>
+        {% if recipes %}
+            <ul class="space-y-2">
+                {% for recipe in recipes %}
+                    <li><a href="#" class="text-teal-400 hover:underline">{{ recipe.name }}</a></li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-gray-400">Inga recept sparade ännu.</p>
+        {% endif %}
     </div>
 </div>
 
 <script>
-// Alpine.js-logik för att hantera receptskapande
-// Kommer att implementeras i nästa steg
+document.addEventListener('alpine:init', () => {
+    Alpine.data('recipeCreator', () => ({
+        recipeName: '',
+        ingredients: [],
+        searchResults: [],
+        searchQuery: '',
+
+        searchIngredients() {
+            if (this.searchQuery.trim() === '') return;
+            fetch(`/api/search-food?q=${this.searchQuery}`)
+                .then(res => res.json())
+                .then(data => {
+                    this.searchResults = data;
+                });
+        },
+
+        addIngredient(food) {
+            // Logik för att lägga till ingrediens
+            this.ingredients.push({
+                food_name: food.food_name,
+                grams: food.grams,
+                food_id: food.food_id
+            });
+            this.searchResults = []; // Töm sökresultat när en ingrediens läggs till
+        },
+
+        removeIngredient(index) {
+            this.ingredients.splice(index, 1);
+        },
+
+        saveRecipe() {
+            // Logik för att spara receptet
+            if (!this.recipeName || this.ingredients.length === 0) {
+                alert('Du måste ange ett receptnamn och lägga till ingredienser.');
+                return;
+            }
+
+            const recipeData = {
+                name: this.recipeName,
+                ingredients: this.ingredients
+            };
+
+            fetch('/api/save-recipe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(recipeData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Recept sparad!');
+                // Uppdatera receptlistan på sidan
+                // Om du har en funktion för att hämta recept, anropa den här
+                // Om du vill uppdatera den här sidan dynamiskt, kan du använda Alpine.js
+                // Exempel: Alpine.store('recipeStore').fetchRecipes();
+            })
+            .catch(error => {
+                console.error('Error saving recipe:', error);
+                alert('Ett fel uppstod när receptet sparades.');
+            });
+        }
+    }));
+});
 </script>
 {% endblock %} 

@@ -1,7 +1,7 @@
 import re
 from flask import render_template, Blueprint, flash, redirect, url_for, request, current_app, jsonify
 from app import db
-from app.models import User, WeightLog, FoodLog, StepLog, CardioLog, FightRondLog
+from app.models import User, WeightLog, FoodLog, StepLog, CardioLog, FightRondLog, Recipe, RecipeIngredient
 from app.services import stats_service
 from app.services import fatsecret_service
 from flask_wtf import FlaskForm
@@ -241,10 +241,59 @@ def diet():
     return render_template('diet.html', title='Kost', search_results=search_results, food_logs=grouped_logs)
 
 
-@main_bp.route('/recipes')
+@main_bp.route('/recipes', methods=['GET', 'POST'])
 def recipes():
-    """Visar sidan för att hantera recept."""
-    return render_template('recipes.html', title='Mina Recept')
+    """Visar sidan för att hantera recept och hanterar skapande av nya."""
+    user = get_or_create_default_user()
+
+    if request.method == 'POST':
+        data = request.get_json()
+        recipe_name = data.get('name')
+        ingredients = data.get('ingredients')
+
+        if not recipe_name or not ingredients:
+            return jsonify({'error': 'Receptnamn och ingredienser krävs.'}), 400
+
+        new_recipe = Recipe(name=recipe_name, user_id=user.id)
+        db.session.add(new_recipe)
+        db.session.flush() # För att få ett ID till new_recipe
+
+        for ing in ingredients:
+            new_ingredient = RecipeIngredient(
+                recipe_id=new_recipe.id,
+                food_name=ing['food_name'],
+                grams=ing['grams'],
+                calories=ing['calories'],
+                protein=ing['protein'],
+                carbohydrates=ing['carbohydrates'],
+                fat=ing['fat']
+            )
+            db.session.add(new_ingredient)
+        
+        db.session.commit()
+        return jsonify({'success': True, 'message': f"Receptet '{recipe_name}' har sparats!"})
+
+    recipes = db.session.scalars(db.select(Recipe).where(Recipe.user_id==user.id)).all()
+    return render_template('recipes.html', title='Mina Recept', recipes=recipes)
+
+
+@main_bp.route('/api/search-food')
+def search_food_api():
+    """API-endpoint för att söka efter livsmedel."""
+    search_term = request.args.get('q')
+    if not search_term:
+        return jsonify({'error': 'Sökterm saknas'}), 400
+    
+    token = fatsecret_service.get_fatsecret_token()
+    if not token:
+        return jsonify({'error': 'Kunde inte ansluta till FatSecret'}), 500
+        
+    search_data = fatsecret_service.search_food(search_term, token)
+    
+    if search_data and 'foods' in search_data and 'food' in search_data['foods']:
+        return jsonify(search_data['foods']['food'])
+    
+    return jsonify([])
 
 
 @main_bp.route('/diet/add', methods=['POST'])
