@@ -1,7 +1,7 @@
 import re
 from flask import render_template, Blueprint, flash, redirect, url_for, request, current_app
 from app import db
-from app.models import User, WeightLog, FoodLog
+from app.models import User, WeightLog, FoodLog, StepLog, CardioLog, FightRondLog
 from app.services import stats_service
 from app.services import fatsecret_service
 from flask_wtf import FlaskForm
@@ -96,24 +96,63 @@ def weight():
 @main_bp.route('/training', methods=['GET', 'POST'])
 def training():
     """Renderar träningssidan och hanterar loggning av aktivitet."""
+    user = get_or_create_default_user()
+
     if request.method == 'POST':
         if 'log_steps' in request.form:
-            steps = request.form.get('steps')
-            flash(f"Loggade {steps} steg!", "success")
-            # TODO: Spara till databas
+            try:
+                steps = int(request.form.get('steps'))
+                # Sök efter befintlig logg för dagen
+                log = db.session.scalar(db.select(StepLog).where(StepLog.user_id==user.id, StepLog.date==date.today()))
+                if log:
+                    log.steps = steps # Uppdatera
+                else:
+                    log = StepLog(steps=steps, user_id=user.id) # Skapa ny
+                    db.session.add(log)
+                db.session.commit()
+                flash(f"Loggade {steps} steg!", "success")
+            except (ValueError, TypeError):
+                flash("Vänligen ange ett giltigt antal steg.", "danger")
         
         elif 'log_cardio' in request.form:
-            avg_bpm = request.form.get('avg_bpm')
-            duration = request.form.get('duration_minutes')
-            # Enkel formel för kalorier: (Puls * Tid * Faktor)
-            # Denna är inte vetenskaplig, men en startpunkt.
-            calories_burned = int(int(avg_bpm) * int(duration) * 0.08)
-            flash(f"Loggade konditionspass! Uppskattade kalorier: {calories_burned} kcal.", "success")
-            # TODO: Spara till databas
+            try:
+                avg_bpm = int(request.form.get('avg_bpm'))
+                duration = int(request.form.get('duration_minutes'))
+                calories_burned = int(avg_bpm * duration * 0.08)
+                
+                log = CardioLog(
+                    avg_bpm=avg_bpm, 
+                    duration_minutes=duration, 
+                    calories_burned=calories_burned, 
+                    user_id=user.id
+                )
+                db.session.add(log)
+                db.session.commit()
+                flash(f"Loggade konditionspass! ({calories_burned} kcal)", "success")
+            except (ValueError, TypeError):
+                flash("Vänligen fyll i både puls och tid.", "danger")
+
+        elif 'log_fight_rond' in request.form:
+            try:
+                bpm = int(request.form.get('bpm'))
+                # Kalorier för en 3-minuters rond
+                calories_burned = int(bpm * 3 * 0.08)
+                log = FightRondLog(bpm=bpm, calories_burned=calories_burned, user_id=user.id)
+                db.session.add(log)
+                db.session.commit()
+                flash(f"Loggade fight-rond med {bpm} BPM! ({calories_burned} kcal)", "success")
+            except (ValueError, TypeError):
+                flash("Vänligen ange en giltig puls.", "danger")
 
         return redirect(url_for('main.training'))
+    
+    # Hämta dagens loggar för att visa på sidan
+    today = date.today()
+    step_log = db.session.scalar(db.select(StepLog).where(StepLog.user_id==user.id, StepLog.date==today))
+    cardio_logs = db.session.scalars(db.select(CardioLog).where(CardioLog.user_id==user.id, CardioLog.date==today)).all()
+    fight_rond_logs = db.session.scalars(db.select(FightRondLog).where(FightRondLog.user_id==user.id, FightRondLog.date==today)).all()
         
-    return render_template('training.html', title='Träning')
+    return render_template('training.html', title='Träning', step_log=step_log, cardio_logs=cardio_logs, fight_rond_logs=fight_rond_logs)
 
 
 @main_bp.route('/diet', methods=['GET', 'POST'])

@@ -37,3 +37,33 @@ class FoodLog(db.Model):
 
     def __repr__(self):
         return f'<FoodLog {self.date} - {self.meal_type}: {self.food_name}>'
+
+class StepLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.Date, nullable=False, default=date.today)
+    steps = db.Column(db.Integer, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    def __repr__(self):
+        return f'<StepLog {self.date}: {self.steps} steg>'
+
+class CardioLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.Date, nullable=False, default=date.today)
+    duration_minutes = db.Column(db.Integer, nullable=False)
+    avg_bpm = db.Column(db.Integer, nullable=False)
+    calories_burned = db.Column(db.Integer, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    def __repr__(self):
+        return f'<CardioLog {self.date}: {self.duration_minutes} min, {self.calories_burned} kcal>'
+
+class FightRondLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.Date, nullable=False, default=date.today)
+    bpm = db.Column(db.Integer, nullable=False)
+    calories_burned = db.Column(db.Integer, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    def __repr__(self):
+        return f'<FightRondLog {self.date}: {self.bpm} BPM>'
