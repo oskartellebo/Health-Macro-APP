@@ -93,6 +93,29 @@ def weight():
     return render_template('weight.html', title='Vikt', form=form, weight_logs=logs, stats=stats)
 
 
+@main_bp.route('/training', methods=['GET', 'POST'])
+def training():
+    """Renderar träningssidan och hanterar loggning av aktivitet."""
+    if request.method == 'POST':
+        if 'log_steps' in request.form:
+            steps = request.form.get('steps')
+            flash(f"Loggade {steps} steg!", "success")
+            # TODO: Spara till databas
+        
+        elif 'log_cardio' in request.form:
+            avg_bpm = request.form.get('avg_bpm')
+            duration = request.form.get('duration_minutes')
+            # Enkel formel för kalorier: (Puls * Tid * Faktor)
+            # Denna är inte vetenskaplig, men en startpunkt.
+            calories_burned = int(int(avg_bpm) * int(duration) * 0.08)
+            flash(f"Loggade konditionspass! Uppskattade kalorier: {calories_burned} kcal.", "success")
+            # TODO: Spara till databas
+
+        return redirect(url_for('main.training'))
+        
+    return render_template('training.html', title='Träning')
+
+
 @main_bp.route('/diet', methods=['GET', 'POST'])
 def diet():
     """Renderar sidan för kostloggning och hanterar sökning."""
