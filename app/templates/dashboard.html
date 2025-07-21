@@ -7,59 +7,55 @@
 </div>
 
 <!-- Stat-kort -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-    <!-- Senaste Vikt -->
-    <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
-        <div class="flex items-center">
-            <div class="p-3 rounded-full bg-emerald-500 bg-opacity-20">
-                <svg class="h-6 w-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-            </div>
-            <div class="ml-4">
-                <p class="text-sm font-medium text-gray-400">Vikt idag</p>
-                {% if weight_stats.avg_7_days %}
-                    <p class="text-2xl font-bold text-white">{{ "%.1f"|format(weight_stats.avg_7_days) }} kg</p>
-                {% else %}
-                    <p class="text-2xl font-bold text-white">-</p>
-                {% endif %}
-            </div>
-        </div>
-        <div class="mt-4">
-            {% if weight_stats.change is not none %}
-                <p class="text-sm {{ 'text-green-400' if weight_stats.change < 0 else 'text-red-400' }}">
-                    <span class="font-bold">
-                        {{ "%.2f"|format(weight_stats.change) }} kg
-                    </span>
-                    sedan förra 7-dagarsperioden
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <!-- Vikt-kort -->
+    <div class="bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-2xl shadow-lg border border-gray-700">
+        <div class="flex justify-between items-start">
+            <div class="flex flex-col space-y-1">
+                <p class="text-sm font-medium text-gray-400">Senaste Vikt</p>
+                <p class="text-3xl font-bold text-white">
+                    {{ "%.1f"|format(weight_stats.avg_7_days) if weight_stats.avg_7_days else '-' }} kg
                 </p>
-            {% else %}
-                <p class="text-sm text-gray-500">Logga mer data för att se trend</p>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Kalorier Idag -->
-    <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
-        <div class="flex items-center">
-            <div class="p-3 rounded-full bg-emerald-500 bg-opacity-20">
-                <svg class="h-6 w-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </div>
+            <div class="p-3 bg-gray-700 rounded-xl">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
             </div>
-            <div class="ml-4">
-                <p class="text-sm font-medium text-gray-400">Kalorier</p>
-                <p class="text-2xl font-bold text-white">{{ "%.0f"|format(calorie_stats.total_calories) }}</p>
+        </div>
+        {% if weight_stats.change is not none %}
+            <p class="text-sm mt-4 flex items-center {{ 'text-red-400' if weight_stats.change > 0 else 'text-green-400' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="{{ 'M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z' if weight_stats.change <= 0 else 'M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' }}" clip-rule="evenodd" />
+                </svg>
+                {{ "%.2f"|format(weight_stats.change|abs) }} kg vs föregående 7 dagar
+            </p>
+        {% else %}
+            <p class="text-sm text-gray-500 mt-4">Mer data behövs för trend</p>
+        {% endif %}
+    </div>
+
+    <!-- Kalorier-kort -->
+    <div class="bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-2xl shadow-lg border border-gray-700">
+        <div class="flex justify-between items-start">
+            <div class="flex flex-col space-y-1">
+                <p class="text-sm font-medium text-gray-400">Kalorier Idag</p>
+                <p class="text-3xl font-bold text-white">{{ "%.0f"|format(calorie_stats.total_calories) }}</p>
+            </div>
+            <div class="p-3 bg-gray-700 rounded-xl">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
             </div>
         </div>
         <div class="mt-4">
-            <div class="w-full bg-gray-700 rounded-full h-2.5">
-                <div class="bg-emerald-500 h-2.5 rounded-full" style="width: {{ calorie_stats.progress_percentage }}%"></div>
+            <div class="w-full bg-gray-700 rounded-full h-2">
+                <div class="bg-orange-500 h-2 rounded-full" style="width: {{ calorie_stats.progress_percentage }}%"></div>
             </div>
-            <p class="text-sm text-gray-400 mt-1">{{ "%.0f"|format(calorie_stats.remaining_calories) }} kvar av {{ "%.0f"|format(calorie_stats.calorie_goal) }}</p>
+            <p class="text-sm text-gray-400 mt-2">{{ "%.0f"|format(calorie_stats.remaining_calories) }} kvar av {{ "%.0f"|format(calorie_stats.calorie_goal) }} kcal</p>
         </div>
     </div>
-
+    
     <!-- Träning (platshållare) -->
     <div class="bg-gray-800 p-6 rounded-lg shadow-lg opacity-50">
          <h3 class="text-lg font-semibold text-gray-300">Träning</h3>
