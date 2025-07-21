@@ -70,3 +70,25 @@ class FightRondLog(db.Model):
 
     def __repr__(self):
         return f'<FightRondLog {self.date}: {self.bpm} BPM>'
+
+class Recipe(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    ingredients = db.relationship('RecipeIngredient', backref='recipe', lazy='dynamic', cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f'<Recipe {self.name}>'
+
+class RecipeIngredient(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.id'), nullable=False)
+    food_name = db.Column(db.String(100), nullable=False)
+    grams = db.Column(db.Integer, nullable=False)
+    calories = db.Column(db.Float, nullable=False)
+    protein = db.Column(db.Float, nullable=True)
+    carbohydrates = db.Column(db.Float, nullable=True)
+    fat = db.Column(db.Float, nullable=True)
+
+    def __repr__(self):
+        return f'<RecipeIngredient {self.food_name} for Recipe ID {self.recipe_id}>'
