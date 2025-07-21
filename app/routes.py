@@ -99,15 +99,24 @@ def diet():
     search_results = None
     if request.method == 'POST' and 'search_ingredient' in request.form:
         search_term = request.form.get('search_ingredient')
+        current_app.logger.info(f"Söker efter: '{search_term}'")
+
         if search_term:
             token = fatsecret_service.get_fatsecret_token()
             if token:
+                current_app.logger.info("Fick FatSecret-token.")
                 search_data = fatsecret_service.search_food(search_term, token)
+                current_app.logger.info(f"FatSecret API-svar: {search_data}")
+
                 if search_data and 'foods' in search_data and 'food' in search_data['foods']:
                     search_results = search_data['foods']['food']
                 else:
                     flash('Inga resultat hittades för den söktermen.', 'info')
+                    if search_data and 'error' in search_data:
+                        error_message = search_data['error'].get('message', 'Okänt fel från API.')
+                        flash(f"API-fel: {error_message}", 'danger')
             else:
+                current_app.logger.error("Misslyckades med att få FatSecret-token.")
                 flash('Kunde inte ansluta till FatSecret. Kontrollera API-nycklarna.', 'danger')
 
     # Hämta dagens loggade mat
