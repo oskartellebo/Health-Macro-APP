@@ -117,23 +117,33 @@ def training():
         elif 'log_cardio' in request.form:
             try:
                 avg_bpm = int(request.form.get('avg_bpm'))
-                duration = int(request.form.get('duration_minutes'))
+                duration_str = request.form.get('duration_string', '0')
                 distance_str = request.form.get('distance_km')
+
+                # Konvertera "M:S" eller "M" till totalt antal sekunder
+                parts = duration_str.split(':')
+                if len(parts) == 2:
+                    duration_seconds = int(parts[0]) * 60 + int(parts[1])
+                else:
+                    duration_seconds = int(parts[0]) * 60
+                
+                duration_minutes = duration_seconds / 60.0
+
                 distance = float(distance_str) if distance_str else None
-                calories_burned = int(avg_bpm * duration * 0.08)
+                calories_burned = int(avg_bpm * duration_minutes * 0.08)
                 
                 log = CardioLog(
                     avg_bpm=avg_bpm, 
-                    duration_minutes=duration, 
+                    duration_seconds=duration_seconds, 
                     calories_burned=calories_burned,
                     distance_km=distance,
                     user_id=user.id
                 )
                 db.session.add(log)
                 db.session.commit()
-                flash(f"Loggade konditionspass! ({calories_burned} kcal)", "success")
+                flash(f"Loggade konditionspass!", "success")
             except (ValueError, TypeError):
-                flash("Vänligen fyll i både puls och tid.", "danger")
+                flash("Vänligen fyll i puls och tid korrekt (t.ex. 9:34).", "danger")
 
         elif 'log_fight_rond' in request.form:
             try:

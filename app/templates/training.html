@@ -62,8 +62,8 @@
                     <input type="number" name="avg_bpm" id="avg_bpm" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-teal-500 focus:border-teal-500" placeholder="t.ex. 140">
                 </div>
                 <div>
-                    <label for="duration_minutes" class="block text-sm font-medium text-gray-300">Tid (min)</label>
-                    <input type="number" name="duration_minutes" id="duration_minutes" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-teal-500 focus:border-teal-500" placeholder="t.ex. 30">
+                    <label for="duration_string" class="block text-sm font-medium text-gray-300">Tid (min:sek)</label>
+                    <input type="text" name="duration_string" id="duration_string" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-teal-500 focus:border-teal-500" placeholder="t.ex. 9:34">
                 </div>
                 <div>
                     <label for="distance_km" class="block text-sm font-medium text-gray-300">Distans (km)</label>
@@ -78,12 +78,19 @@
         {% if cardio_logs %}
             <div class="mt-4">
                 <h4 class="text-md font-semibold text-gray-300">Dagens Konditionspass:</h4>
-                <ul class="list-disc list-inside text-gray-400">
+                <ul class="list-disc list-inside text-gray-400 space-y-1">
                     {% for log in cardio_logs %}
+                        {% set minutes = log.duration_seconds // 60 %}
+                        {% set seconds = log.duration_seconds % 60 %}
+                        {% set pace_minutes = (log.duration_seconds / log.distance_km) // 60 if log.distance_km else 0 %}
+                        {% set pace_seconds = (log.duration_seconds / log.distance_km) % 60 if log.distance_km else 0 %}
                         <li>
-                            {{ log.duration_minutes }} minuter med {{ log.avg_bpm }} BPM
-                            {% if log.distance_km %}({{ log.distance_km }} km){% endif %}
-                            - ({{ log.calories_burned }} kcal)
+                            {{ minutes }}:{{ "%02d"|format(seconds) }} min
+                            {% if log.distance_km %}
+                                - {{ log.distance_km }} km 
+                                <span class="text-teal-400 font-bold">({{ "%.0f"|format(pace_minutes) }}:{{ "%02d"|format(pace_seconds) }} min/km)</span>
+                            {% endif %}
+                            - {{ log.avg_bpm }} BPM ({{ log.calories_burned }} kcal)
                         </li>
                     {% endfor %}
                 </ul>

@@ -52,14 +52,14 @@ class StepLog(db.Model):
 class CardioLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.Date, nullable=False, default=date.today)
-    duration_minutes = db.Column(db.Integer, nullable=False)
+    duration_seconds = db.Column(db.Integer, nullable=False) # Ändrat från minuter till sekunder
     avg_bpm = db.Column(db.Integer, nullable=False)
     calories_burned = db.Column(db.Integer, nullable=False)
     distance_km = db.Column(db.Float, nullable=True) # Ny kolumn för distans
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     def __repr__(self):
-        return f'<CardioLog {self.date}: {self.duration_minutes} min, {self.calories_burned} kcal>'
+        return f'<CardioLog {self.date}: {self.duration_seconds} sek, {self.calories_burned} kcal>'
 
 class FightRondLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
