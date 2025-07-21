@@ -18,20 +18,23 @@
             </div>
             <div class="ml-4">
                 <p class="text-sm font-medium text-gray-400">Vikt idag</p>
-                {% if weight_stats.latest_weight %}
-                    <p class="text-2xl font-bold text-white">{{ weight_stats.latest_weight }} kg</p>
+                {% if weight_stats.avg_7_days %}
+                    <p class="text-2xl font-bold text-white">{{ "%.1f"|format(weight_stats.avg_7_days) }} kg</p>
                 {% else %}
                     <p class="text-2xl font-bold text-white">-</p>
                 {% endif %}
             </div>
         </div>
         <div class="mt-4">
-            {% if weight_stats.change_since_week_ago is not none %}
-                <p class="text-sm {{ 'text-green-400' if weight_stats.change_since_week_ago < 0 else 'text-red-400' }}">
-                    {{ "%.2f"|format(weight_stats.change_since_week_ago) }} kg denna vecka
+            {% if weight_stats.change is not none %}
+                <p class="text-sm {{ 'text-green-400' if weight_stats.change < 0 else 'text-red-400' }}">
+                    <span class="font-bold">
+                        {{ "%.2f"|format(weight_stats.change) }} kg
+                    </span>
+                    sedan förra 7-dagarsperioden
                 </p>
             {% else %}
-                <p class="text-sm text-gray-500">Logga mer data</p>
+                <p class="text-sm text-gray-500">Logga mer data för att se trend</p>
             {% endif %}
         </div>
     </div>
@@ -83,8 +86,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const ctx = document.getElementById('weightChart').getContext('2d');
     
     // Hämta data från Flask
-    const labels = {{ chart_labels|tojson }};
-    const data = {{ chart_values|tojson }};
+    const labels = {{ labels|tojson }};
+    const data = {{ data|tojson }};
 
     if (data.length > 0) {
         new Chart(ctx, {
