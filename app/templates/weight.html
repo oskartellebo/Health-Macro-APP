@@ -12,11 +12,17 @@
             <div class="mb-4">
                 <label for="weight" class="block text-sm font-medium text-gray-300">Vikt (kg)</label>
                 {{ form.weight(class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-teal-500 focus:border-teal-500") }}
+                {% for error in form.weight.errors %}
+                    <span class="text-red-500 text-xs">{{ error }}</span>
+                {% endfor %}
             </div>
 
-            <div class="mb-4">
+            <div class="mb-6">
                 <label for="date" class="block text-sm font-medium text-gray-300">Datum</label>
                 {{ form.date(class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-teal-500 focus:border-teal-500") }}
+                {% for error in form.date.errors %}
+                    <span class="text-red-500 text-xs">{{ error }}</span>
+                {% endfor %}
             </div>
 
             <div>

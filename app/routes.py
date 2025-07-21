@@ -68,22 +68,21 @@ def weight():
 
     if form.validate_on_submit():
         # Kontrollera om en logg för detta datum redan finns
-        existing_log_query = db.select(WeightLog).where(
-            WeightLog.user_id == user.id,
-            WeightLog.date == form.date.data
+        existing_log = db.session.scalar(
+            db.select(WeightLog).where(
+                WeightLog.user_id == user.id,
+                WeightLog.date == form.date.data
+            )
         )
-        existing_log = db.session.scalar(existing_log_query)
         if existing_log:
             existing_log.weight = form.weight.data
             flash('Vikten för det valda datumet har uppdaterats!', 'success')
         else:
-            # Parametrarna matchar nu kolumnnamnen i WeightLog-modellen
             new_log = WeightLog(weight=form.weight.data, date=form.date.data, user_id=user.id)
             db.session.add(new_log)
             flash('Ny vikt har loggats!', 'success')
         
         db.session.commit()
-        flash('Vikt loggad!', 'success')
         return redirect(url_for('main.weight'))
 
     # Hämta befintliga loggar
