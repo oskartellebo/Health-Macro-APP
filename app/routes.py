@@ -230,35 +230,63 @@ def diet():
 
 @main_bp.route('/diet/add', methods=['POST'])
 def add_food_log():
-    """Tar emot data från sökresultat och loggar mat i databasen."""
-    food_name = request.form.get('food_name')
-    food_description = request.form.get('food_description')
-    meal_type = request.form.get('meal_type')
+    """Tar emot data från sökresultat, skalar näringsvärden och loggar i databasen."""
+    try:
+        food_name = request.form.get('food_name')
+        food_description = request.form.get('food_description')
+        meal_type = request.form.get('meal_type')
+        grams = int(request.form.get('grams', 100))
 
-    # Extrahera näringsvärden med regex
-    calories = re.search(r"Calories: ([\d.]+)kcal", food_description)
-    fat = re.search(r"Fat: ([\d.]+)g", food_description)
-    carbs = re.search(r"Carbs: ([\d.]+)g", food_description)
-    protein = re.search(r"Protein: ([\d.]+)g", food_description)
+        # Extrahera näringsvärden per 100g
+        base_calories_match = re.search(r"Calories: ([\d.]+)kcal", food_description)
+        base_fat_match = re.search(r"Fat: ([\d.]+)g", food_description)
+        base_carbs_match = re.search(r"Carbs: ([\d.]+)g", food_description)
+        base_protein_match = re.search(r"Protein: ([\d.]+)g", food_description)
 
-    if not all([food_name, meal_type, calories]):
-        flash('Något gick fel, all data kunde inte läsas in.', 'danger')
-        return redirect(url_for('main.diet'))
+        if not all([food_name, meal_type, base_calories_match]):
+            flash('Något gick fel, all data kunde inte läsas in.', 'danger')
+            return redirect(url_for('main.diet'))
 
-    user = get_or_create_default_user()
+        # Hämta värden per 100g
+        cals_per_100g = float(base_calories_match.group(1))
+        fat_per_100g = float(base_fat_match.group(1)) if base_fat_match else 0
+        carbs_per_100g = float(base_carbs_match.group(1)) if base_carbs_match else 0
+        protein_per_100g = float(base_protein_match.group(1)) if base_protein_match else 0
+        
+        # Skala värden baserat på angivna gram
+        scaling_factor = grams / 100.0
+        
+        user = get_or_create_default_user()
+        new_log = FoodLog(
+            user_id=user.id,
+            food_name=food_name,
+            meal_type=meal_type,
+            grams=grams,
+            calories=cals_per_100g * scaling_factor,
+            fat=fat_per_100g * scaling_factor,
+            carbohydrates=carbs_per_100g * scaling_factor,
+            protein=protein_per_100g * scaling_factor,
+            base_servings_info=food_description,
+            date=date.today()
+        )
 
-    new_log = FoodLog(
-        user_id=user.id,
-        food_name=food_name,
-        meal_type=meal_type,
-        calories=float(calories.group(1)),
-        fat=float(fat.group(1)) if fat else 0,
-        carbohydrates=float(carbs.group(1)) if carbs else 0,
-        protein=float(protein.group(1)) if protein else 0,
-        date=date.today()
-    )
+        db.session.add(new_log)
+        db.session.commit()
+        flash(f"{food_name} ({grams}g) har lagts till i {meal_type}!", 'success')
+    
+    except (ValueError, TypeError):
+        flash("Felaktig inmatning. Ange ett giltigt antal gram.", 'danger')
 
-    db.session.add(new_log)
-    db.session.commit()
-    flash(f"{food_name} har lagts till i {meal_type}!", 'success')
+    return redirect(url_for('main.diet'))
+
+@main_bp.route('/diet/delete/<int:log_id>', methods=['POST'])
+def delete_food_log(log_id):
+    """Tar bort en specifik matlogg."""
+    log_to_delete = db.session.get(FoodLog, log_id)
+    if log_to_delete:
+        db.session.delete(log_to_delete)
+        db.session.commit()
+        flash("Matvaran har tagits bort.", "success")
+    else:
+        flash("Kunde inte hitta loggen att ta bort.", "warning")
     return redirect(url_for('main.diet'))

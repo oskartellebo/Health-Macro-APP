@@ -39,6 +39,7 @@
                             <p class="text-sm text-gray-400">{{ food.food_description }}</p>
                         </div>
                         <div class="flex items-center space-x-2">
+                            <input type="number" name="grams" value="100" class="w-20 bg-gray-600 border border-gray-500 rounded-md py-1 px-2 text-white text-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500" placeholder="gram">
                             <select name="meal_type" class="bg-gray-600 border border-gray-500 rounded-md py-1 px-2 text-white text-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
                                 <option value="Frukost">Frukost</option>
                                 <option value="Lunch">Lunch</option>
@@ -59,33 +60,28 @@
 <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
     <h2 class="text-xl font-semibold text-white mb-4">Dagens måltider</h2>
     
-    {% set meal_types = ['Frukost', 'Lunch', 'Middag', 'Mellanmål'] %}
-    {% for meal in meal_types %}
-    <div class="mb-6">
-        <div class="flex justify-between items-center mb-2">
-            <h3 class="text-lg font-bold text-emerald-400">{{ meal }}</h3>
-            {% set total_calories = food_logs.get(meal, []) | sum(attribute='calories') %}
-            <span class="text-gray-300 font-semibold">{{ "%.0f"|format(total_calories) }} kcal</span>
-        </div>
-        {% if food_logs.get(meal) %}
-            <ul class="space-y-2">
-                {% for log in food_logs[meal] %}
-                <li class="flex justify-between items-center bg-gray-700 p-3 rounded-md">
-                    <div>
-                        <p class="text-white">{{ log.food_name }}</p>
-                        <p class="text-sm text-gray-400">
-                            {{ "%.0f"|format(log.calories) }} kcal, P: {{ "%.1f"|format(log.protein) }}g, C: {{ "%.1f"|format(log.carbohydrates) }}g, F: {{ "%.1f"|format(log.fat) }}g
-                        </p>
-                    </div>
-                </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <div class="text-center text-gray-500 border-2 border-dashed border-gray-600 p-4 rounded-md">
-                Inga varor loggade för {{ meal.lower() }}.
+    <div class="space-y-6">
+        {% for meal_type, logs in food_logs.items() %}
+            <div class="bg-gray-800 p-4 rounded-lg">
+                <h3 class="text-xl font-semibold text-white mb-3">{{ meal_type }}</h3>
+                <ul class="space-y-3">
+                    {% for log in logs %}
+                        <li class="flex justify-between items-center bg-gray-700 p-3 rounded-md">
+                            <div>
+                                <p class="font-semibold text-white">{{ log.food_name }}</p>
+                                <p class="text-sm text-gray-400">{{ log.grams }}g - {{ "%.0f"|format(log.calories) }}kcal, P:{{ "%.1f"|format(log.protein) }}g, C:{{ "%.1f"|format(log.carbohydrates) }}g, F:{{ "%.1f"|format(log.fat) }}g</p>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button class="text-gray-400 hover:text-white" disabled>✏️</button>
+                                <form method="POST" action="{{ url_for('main.delete_food_log', log_id=log.id) }}" onsubmit="return confirm('Är du säker på att du vill ta bort?');">
+                                    <button type="submit" class="text-gray-400 hover:text-white">❌</button>
+                                </form>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
             </div>
-        {% endif %}
+        {% endfor %}
     </div>
-    {% endfor %}
 </div>
 {% endblock %} 
