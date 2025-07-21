@@ -155,6 +155,13 @@ def training():
     return render_template('training.html', title='Träning', step_log=step_log, cardio_logs=cardio_logs, fight_rond_logs=fight_rond_logs)
 
 
+@main_bp.route('/status')
+def status():
+    """Renderar statussidan med sammanfattad data."""
+    # TODO: Hämta och bearbeta data för alla sektioner
+    return render_template('status.html', title='Status')
+
+
 @main_bp.route('/diet', methods=['GET', 'POST'])
 def diet():
     """Renderar sidan för kostloggning och hanterar sökning."""
