@@ -4,13 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }} - Health Macro</title>
-    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="h-full">
-    <div class="flex min-h-full">
-        <!-- Sidomeny (off-canvas för mobil, synlig på desktop) -->
-        <div id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-gray-800 transform -translate-x-full transition-transform duration-300 ease-in-out z-30 md:relative md:translate-x-0">
+<body class="bg-gray-900 text-gray-100">
+    <div x-data="{ sidebarOpen: false }" class="flex h-screen bg-gray-900">
+        <!-- Sidomeny -->
+        <div :class="sidebarOpen ? 'translate-x-0 ease-out' : '-translate-x-full ease-in'" class="fixed z-30 inset-y-0 left-0 w-64 transition duration-300 transform bg-gray-800 overflow-y-auto lg:translate-x-0 lg:static lg:inset-0">
             <div class="flex items-center justify-center h-16 bg-gray-900">
                 <span class="text-white font-bold uppercase">Health Macro</span>
             </div>
@@ -35,41 +36,39 @@
             </div>
         </div>
 
-        <!-- Huvudinnehåll -->
-        <div class="flex flex-col flex-1">
-            <!-- Header för mobil med hamburger-knapp -->
-            <div class="md:hidden flex justify-between items-center bg-gray-800 p-4">
-                <span class="text-white font-bold uppercase">Health Macro</span>
-                <button id="menu-btn" class="text-white focus:outline-none">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+        <!-- Innehåll -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header för mobil -->
+            <header class="flex justify-between items-center p-4 bg-gray-800 lg:hidden">
+                <a href="{{ url_for('main.dashboard') }}" class="text-white text-2xl font-bold">Health Macro</a>
+                <button @click="sidebarOpen = !sidebarOpen" class="text-white focus:outline-none">
+                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </button>
-            </div>
-            
-            <main class="flex-1 p-4 sm:p-6">
+            </header>
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-4 sm:p-6">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="flex flex-col items-center space-y-2">
+                            {% for category, message in messages %}
+                                <div class="bg-{{ category }}-500 text-white px-4 py-3 rounded relative" role="alert">
+                                    <strong class="font-bold">{{ category.title() }}:</strong>
+                                    <span class="block sm:inline">{{ message }}</span>
+                                    <span class="absolute top-0 bottom-0 right-0 px-4 py-3">
+                                        <svg class="fill-current h-6 w-6 text-white" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" onclick="this.parentElement.parentElement.remove()">
+                                            <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.03a1.2 1.2 0 0 1 1.697 0l2.758 3.15 2.759 3.152a1.2 1.2 0 0 1 0 1.698z"/>
+                                        </svg>
+                                    </span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
                 {% block content %}{% endblock %}
             </main>
         </div>
-        
-        <!-- Overlay för att stänga menyn på mobil -->
-        <div id="sidebar-overlay" class="fixed inset-0 bg-black opacity-50 z-20 hidden md:hidden"></div>
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const menuBtn = document.getElementById('menu-btn');
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-
-            function toggleMenu() {
-                sidebar.classList.toggle('-translate-x-full');
-                overlay.classList.toggle('hidden');
-            }
-
-            menuBtn.addEventListener('click', toggleMenu);
-            overlay.addEventListener('click', toggleMenu);
-        });
-    </script>
 </body>
 </html>

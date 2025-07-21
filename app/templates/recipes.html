@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="space-y-8">
+<div class="space-y-8" x-data="{ ingredients: [], searchResults: [] }">
     <div>
         <div class="flex justify-between items-center">
             <h1 class="text-3xl font-bold text-white">Mina Recept</h1>
@@ -13,15 +13,50 @@
     <!-- Sektion: Skapa Nytt Recept -->
     <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
         <h2 class="text-2xl font-bold text-white mb-4">Skapa Nytt Recept</h2>
-        <p class="text-gray-400">Funktion kommer snart...</p>
-        <!-- Här kommer formuläret för att skapa recept -->
+        
+        <!-- Steg 1: Namnge receptet -->
+        <div class="mb-4">
+            <label for="recipe_name" class="block text-sm font-medium text-gray-300">Receptnamn</label>
+            <input type="text" id="recipe_name" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-teal-500 focus:border-teal-500" placeholder="t.ex. Kyckling med ris">
+        </div>
+
+        <!-- Steg 2: Lägg till ingredienser -->
+        <div class="mb-4">
+            <label for="search_ingredient_recipe" class="block text-sm font-medium text-gray-300">Sök ingrediens</label>
+            <input @keydown.enter.prevent="searchIngredients()" type="text" id="search_ingredient_recipe" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-teal-500 focus:border-teal-500" placeholder="Sök och tryck Enter...">
+        </div>
+
+        <!-- Sökresultat -->
+        <div x-show="searchResults.length > 0" class="mb-4 max-h-60 overflow-y-auto">
+            <template x-for="food in searchResults" :key="food.food_id">
+                <!-- Mall för sökresultat -->
+            </template>
+        </div>
+
+        <!-- Steg 3: Ingredienslista -->
+        <h3 class="text-lg font-semibold text-white mb-2">Ingredienser i receptet</h3>
+        <ul x-show="ingredients.length > 0" class="space-y-2 mb-4">
+            <template x-for="(ingredient, index) in ingredients" :key="index">
+                <!-- Mall för ingrediens -->
+            </template>
+        </ul>
+        <p x-show="ingredients.length === 0" class="text-gray-500">Inga ingredienser tillagda.</p>
+
+        <!-- Steg 4: Spara -->
+        <button @click="saveRecipe()" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline">
+            Spara Recept
+        </button>
     </div>
 
     <!-- Sektion: Dina Sparade Recept -->
     <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
         <h2 class="text-2xl font-bold text-white mb-4">Dina Recept</h2>
         <p class="text-gray-400">Inga recept sparade ännu.</p>
-        <!-- Här kommer listan över sparade recept -->
     </div>
 </div>
+
+<script>
+// Alpine.js-logik för att hantera receptskapande
+// Kommer att implementeras i nästa steg
+</script>
 {% endblock %} 
