@@ -1,5 +1,6 @@
 from datetime import date, timedelta
-from .models import db, User, WeightLog, FoodLog
+from app import db
+from app.models import User, WeightLog, FoodLog
 
 def calculate_weight_stats(user_id):
     """Beräknar viktstatistik för en given användare."""
