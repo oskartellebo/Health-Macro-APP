@@ -1,5 +1,5 @@
 import re
-from flask import render_template, Blueprint, flash, redirect, url_for, request, current_app
+from flask import render_template, Blueprint, flash, redirect, url_for, request, current_app, jsonify
 from app import db
 from app.models import User, WeightLog, FoodLog, StepLog, CardioLog, FightRondLog
 from app.services import stats_service
@@ -158,8 +158,33 @@ def training():
 @main_bp.route('/status')
 def status():
     """Renderar statussidan med sammanfattad data."""
-    # TODO: Hämta och bearbeta data för alla sektioner
     return render_template('status.html', title='Status')
+
+
+@main_bp.route('/api/weight-data')
+def weight_data():
+    user = get_or_create_default_user()
+    period = request.args.get('period', '30') # 30 dagar som standard
+
+    if period == 'all':
+        start_date = None
+    else:
+        try:
+            days = int(period)
+            start_date = date.today() - timedelta(days=days-1)
+        except ValueError:
+            return jsonify({'error': 'Invalid period format'}), 400
+
+    query = db.select(WeightLog).where(WeightLog.user_id == user.id).order_by(WeightLog.date.asc())
+    if start_date:
+        query = query.where(WeightLog.date >= start_date)
+    
+    logs = db.session.scalars(query).all()
+
+    labels = [log.date.strftime('%Y-%m-%d') for log in logs]
+    data = [log.weight for log in logs]
+
+    return jsonify(labels=labels, data=data)
 
 
 @main_bp.route('/diet', methods=['GET', 'POST'])
