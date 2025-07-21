@@ -1,5 +1,5 @@
 import re
-from flask import render_template, Blueprint, flash, redirect, url_for, request
+from flask import render_template, Blueprint, flash, redirect, url_for, request, current_app
 from app import db
 from app.models import User, WeightLog, FoodLog
 from app.services import stats_service
@@ -19,12 +19,20 @@ class WeightForm(FlaskForm):
 
 # --- Helper-funktioner ---
 def get_or_create_default_user():
-    """Hämtar eller skapar en standardanvändare för testning."""
-    user = db.session.scalar(db.select(User).where(User.username == 'default'))
-    if not user:
-        user = User(username='default')
+    """Hämtar eller skapar en standardanvändare för att säkerställa att appen fungerar."""
+    # Försök hämta användare med id 1
+    user = db.session.get(User, 1)
+    if user is None:
+        # Om användaren inte finns, skapa den
+        user = User(id=1, username='default')
         db.session.add(user)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            # Logga felet om det uppstår problem med att skapa användaren
+            current_app.logger.error(f"Kunde inte skapa standardanvändare: {e}")
+            raise
     return user
 
 
@@ -33,7 +41,7 @@ def get_or_create_default_user():
 @main_bp.route('/dashboard')
 def dashboard():
     """Renderar dashboard-sidan."""
-    user = db.session.scalar(db.select(User).where(User.id == 1)) # Anta användare 1
+    user = get_or_create_default_user()
     weight_stats = stats_service.calculate_weight_stats(user.id)
     calorie_stats = stats_service.calculate_calorie_stats(user.id)
     
@@ -104,7 +112,7 @@ def diet():
                 flash('Kunde inte ansluta till FatSecret. Kontrollera API-nycklarna.', 'danger')
 
     # Hämta dagens loggade mat
-    user = db.session.scalar(db.select(User).where(User.id == 1)) # Anta användare 1
+    user = get_or_create_default_user()
     today_logs_query = db.select(FoodLog).where(FoodLog.user_id == user.id, FoodLog.date == date.today()).order_by(FoodLog.id)
     today_logs = db.session.scalars(today_logs_query).all()
 
@@ -135,7 +143,7 @@ def add_food_log():
         flash('Något gick fel, all data kunde inte läsas in.', 'danger')
         return redirect(url_for('main.diet'))
 
-    user = db.session.scalar(db.select(User).where(User.id == 1)) # Anta användare 1
+    user = get_or_create_default_user()
 
     new_log = FoodLog(
         user_id=user.id,

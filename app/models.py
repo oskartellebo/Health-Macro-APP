@@ -6,8 +6,11 @@ class User(db.Model):
     username = db.Column(db.String(64), index=True, unique=True)
     weight_logs = db.relationship('WeightLog', backref='author', lazy='dynamic')
     
-    def __init__(self, username):
-        self.username = username
+    def __init__(self, id=None, username=None):
+        if id is not None:
+            self.id = id
+        if username is not None:
+            self.username = username
 
     def __repr__(self):
         return f'<User {self.username}>'
