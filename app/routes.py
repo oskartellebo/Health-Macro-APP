@@ -118,12 +118,15 @@ def training():
             try:
                 avg_bpm = int(request.form.get('avg_bpm'))
                 duration = int(request.form.get('duration_minutes'))
+                distance_str = request.form.get('distance_km')
+                distance = float(distance_str) if distance_str else None
                 calories_burned = int(avg_bpm * duration * 0.08)
                 
                 log = CardioLog(
                     avg_bpm=avg_bpm, 
                     duration_minutes=duration, 
-                    calories_burned=calories_burned, 
+                    calories_burned=calories_burned,
+                    distance_km=distance,
                     user_id=user.id
                 )
                 db.session.add(log)

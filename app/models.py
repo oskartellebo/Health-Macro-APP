@@ -55,6 +55,7 @@ class CardioLog(db.Model):
     duration_minutes = db.Column(db.Integer, nullable=False)
     avg_bpm = db.Column(db.Integer, nullable=False)
     calories_burned = db.Column(db.Integer, nullable=False)
+    distance_km = db.Column(db.Float, nullable=True) # Ny kolumn för distans
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     def __repr__(self):
